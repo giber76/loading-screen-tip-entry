@@ -29,4 +29,23 @@ const TIP =
 
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 mkdirSync(outDir, { recursive: true });
+
+// Validation guard: the gate takes 1-200 UTF-8 characters, a single
+// non-blank line. Count characters (code points) and UTF-8 bytes and
+// refuse to write anything outside that range, so a bad edit fails
+// loudly here instead of shipping a disqualified entry.
+const charCount = [...TIP].length;
+const byteCount = new TextEncoder().encode(TIP).length;
+if (
+  charCount < 1 ||
+  charCount > 200 ||
+  byteCount > 200 ||
+  TIP.trim() !== TIP ||
+  TIP.trim().length === 0 ||
+  TIP.includes('\n')
+) {
+  throw new Error(
+    `invalid tip: ${charCount} chars, ${byteCount} bytes (must be 1-200 chars, single non-blank line)`,
+  );
+}
 writeFileSync(join(outDir, 'entry.txt'), TIP, 'utf8');
